@@ -6,7 +6,7 @@
 
 // DigitalOut buzzer(PE_10);
 // DigitalIn gasSensor(PE_12);
-// AnalogIn pot(A0);
+AnalogIn pot(A0);
 // AnalogIn tempSensor(A1);
 
 //Function to read input from keyboard & extra bits
@@ -21,18 +21,28 @@ void readChar() {
 }
 
 const string POT_NAME = "POTENTIOMETER";
+const string TEMP_NAME = "TEMPERATURE";
+const string GAS_NAME = "GAS";
 
 //Function to continuously read and print data from sensor
-void readSensor(PinName pin, const string &sensorName) {
+float readSensor(PinName pin, const string &sensorName) {
     AnalogIn sensor(pin);
     float sensorVal = sensor.read();
-    printf("%s raw sensor value: %f \n", sensorName.c_str(), sensorVal);
+    // printf("%s raw sensor value: %f \n", sensorName.c_str(), sensorVal); //only used to test functionality
     ThisThread::sleep_for(2000ms);
+    return sensorVal;
+}
+
+//Function to set the threshold of a sensor
+int threshold(PinName sensorSet, const string &sensorName) {
+    int SensorThreshold = readSensor(A0, POT_NAME) * 100;
+    printf("%s sensor threshold: %d \n", sensorName.c_str(), SensorThreshold);
+    return SensorThreshold;
 }
 
 int main() {
     while (true) {
-        readSensor(A0, POT_NAME);
+        threshold(A1, TEMP_NAME);
     }
 }
 
