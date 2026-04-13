@@ -5,9 +5,9 @@
 #include "mbed.h"
 
 // DigitalOut buzzer(PE_10);
-// DigitalIn gasSensor(PE_12);
+AnalogIn gas(A2);
 AnalogIn pot(A0);
-// AnalogIn tempSensor(A1);
+AnalogIn temp(A1);
 
 //Function to read input from keyboard & extra bits
 UnbufferedSerial uartUsb(USBTX, USBRX, 115200);
@@ -23,26 +23,51 @@ void readChar() {
 const string POT_NAME = "POTENTIOMETER";
 const string TEMP_NAME = "TEMPERATURE";
 const string GAS_NAME = "GAS";
+const string TEMP_WARNING = "TEMPERATURE WARNING";
+const string GAS_WARNING = "GAS WARNING";
 
 //Function to continuously read and print data from sensor
 float readSensor(PinName pin, const string &sensorName) {
     AnalogIn sensor(pin);
     float sensorVal = sensor.read();
-    // printf("%s raw sensor value: %f \n", sensorName.c_str(), sensorVal); //only used to test functionality
-    ThisThread::sleep_for(2000ms);
+     //printf("%s raw sensor value: %f \n", sensorName.c_str(), sensorVal); //only used to test functionality
     return sensorVal;
 }
 
 //Function to set the threshold of a sensor
-int threshold(PinName sensorSet, const string &sensorName) {
+float threshold(const string &sensorName) {
     int SensorThreshold = readSensor(A0, POT_NAME) * 100;
-    printf("%s sensor threshold: %d \n", sensorName.c_str(), SensorThreshold);
+    //printf("%s sensor threshold: %d \n", sensorName.c_str(), SensorThreshold); //testing
     return SensorThreshold;
+}
+
+//Function to evaluate sensor data
+string evaluateData(const string &sensorName, PinName pin) {
+    int thresholdVal = threshold(sensorName);
+    float sensorVal = readSensor(pin, sensorName);
+    if (sensorName == TEMP_NAME) {
+        int celcius = sensorVal * 330; //converts sensor value to degrees Celsius
+        //printf("Temp value: %d degrees Celsius \n Threshold value: %d \n", celcius, thresholdVal); //testing
+        if (celcius > thresholdVal) {
+           // printf("%s  \n", TEMP_WARNING.c_str());//testing
+            return TEMP_WARNING;
+        }
+    } else if (sensorName == GAS_NAME) {
+        int ppmThreshold = thresholdVal * 8;
+        int ppm = sensorVal * 1700; //roughly converts value to ppm
+        printf("gas level: %d ppm \n Threshold value: %d \n", ppm, ppmThreshold);//testing
+        if (ppm > ppmThreshold) {
+            printf("%s  \n", GAS_WARNING.c_str());
+            return GAS_WARNING;
+        }
+    }
+    return "fail";
 }
 
 int main() {
     while (true) {
-        threshold(A1, TEMP_NAME);
+        evaluateData(GAS_NAME, A2);
+        ThisThread::sleep_for(3000ms);
     }
 }
 
