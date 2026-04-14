@@ -4,7 +4,7 @@
 //activate buzzer
 #include "mbed.h"
 
-// DigitalOut buzzer(PE_10);
+DigitalOut buzzer(PE_10);
 AnalogIn gas(A2);
 AnalogIn pot(A0);
 AnalogIn temp(A1);
@@ -12,7 +12,7 @@ AnalogIn temp(A1);
 //Function to read input from keyboard & extra bits
 UnbufferedSerial uartUsb(USBTX, USBRX, 115200);
 char receivedChar = '\0';
-int warningActive = 0;
+bool alarmActive = 0;
 
 void readChar() {
     if (uartUsb.readable()) {
@@ -30,7 +30,7 @@ const string GAS_WARNING = "GAS WARNING";
 float readSensor(PinName pin, const string &sensorName) {
     AnalogIn sensor(pin);
     float sensorVal = sensor.read();
-     //printf("%s raw sensor value: %f \n", sensorName.c_str(), sensorVal); //only used to test functionality
+    //printf("%s raw sensor value: %f \n", sensorName.c_str(), sensorVal); //only used to test functionality
     return sensorVal;
 }
 
@@ -41,32 +41,42 @@ float threshold(const string &sensorName) {
     return SensorThreshold;
 }
 
+//function to control the buzzer
+void buzzerState() {
+    buzzer = alarmActive;
+}
+
 //Function to evaluate sensor data
-string evaluateData(const string &sensorName, PinName pin) {
+void evaluateData(const string &sensorName, PinName pin) {
     int thresholdVal = threshold(sensorName);
     float sensorVal = readSensor(pin, sensorName);
     if (sensorName == TEMP_NAME) {
         int celcius = sensorVal * 330; //converts sensor value to degrees Celsius
-        //printf("Temp value: %d degrees Celsius \n Threshold value: %d \n", celcius, thresholdVal); //testing
+        printf("Temp value: %d degrees Celsius \nThreshold value: %d degrees celcius\n", celcius,
+               thresholdVal); //testing
         if (celcius > thresholdVal) {
-           // printf("%s  \n", TEMP_WARNING.c_str());//testing
-            return TEMP_WARNING;
-        }
-    } else if (sensorName == GAS_NAME) {
-        int ppmThreshold = thresholdVal * 8;
-        int ppm = sensorVal * 1700; //roughly converts value to ppm
-        printf("gas level: %d ppm \n Threshold value: %d \n", ppm, ppmThreshold);//testing
-        if (ppm > ppmThreshold) {
-            printf("%s  \n", GAS_WARNING.c_str());
-            return GAS_WARNING;
+            printf("%s ALARM SOUNDING \n", TEMP_WARNING.c_str()); //testing
+            alarmActive = 1;
         }
     }
-    return "fail";
+
+    if (sensorName == GAS_NAME) {
+        int ppmThreshold = thresholdVal * 8;
+        int ppm = sensorVal * 1700; //roughly converts value to ppm
+        printf("gas level: %d ppm \nThreshold value: %d ppm \n", ppm, ppmThreshold); //testing
+        if (ppm > ppmThreshold) {
+            printf("%s ALARM SOUNDING \n", GAS_WARNING.c_str());
+            alarmActive = 1;
+        }
+    }
+    buzzerState();
 }
 
 int main() {
     while (true) {
-        evaluateData(GAS_NAME, A2);
+        alarmActive = 0;
+        evaluateData(TEMP_NAME, A1);
+        evaluateData(GAS_NAME,A2);
         ThisThread::sleep_for(3000ms);
     }
 }
