@@ -17,6 +17,9 @@ const string SYSTEM_NORMAL = "ALL SYSTEMS NORMAL";
 //alarm state
 bool alarmActive = 0;
 
+//communication with board
+UnbufferedSerial uartUsb(USBTX, USBRX, 115200);
+
 //Function to continuously read and print data from sensor
 float readSensor(PinName pin, const string &sensorName) {
     AnalogIn sensor(pin);
