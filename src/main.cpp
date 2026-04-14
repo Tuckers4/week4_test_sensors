@@ -25,6 +25,7 @@ const string TEMP_NAME = "TEMPERATURE";
 const string GAS_NAME = "GAS";
 const string TEMP_WARNING = "TEMPERATURE WARNING";
 const string GAS_WARNING = "GAS WARNING";
+const string SYSTEM_NORMAL = "ALL SYSTEMS NORMAL";
 
 //Function to continuously read and print data from sensor
 float readSensor(PinName pin, const string &sensorName) {
@@ -44,6 +45,12 @@ float threshold(const string &sensorName) {
 //function to control the buzzer
 void buzzerState() {
     buzzer = alarmActive;
+}
+
+void systemNormal() {
+    if (alarmActive == 0) {
+        printf("%s \n",SYSTEM_NORMAL.c_str());
+    }
 }
 
 //Function to evaluate sensor data
@@ -70,7 +77,10 @@ void evaluateData(const string &sensorName, PinName pin) {
         }
     }
     buzzerState();
+    systemNormal();
 }
+
+
 
 int main() {
     while (true) {
